@@ -1,0 +1,11 @@
+# Binaries
+notes
+*.exe
+
+# Local/tool configs
+.claude/
+.update.ini
+
+# Go
+*.test
+*.out
