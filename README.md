@@ -32,7 +32,7 @@ Notes keeps things simple:
 ## Installation
 
 ```bash
-git clone https://github.com/yourusername/notes
+git clone https://github.com/subbaan/notes
 cd notes
 go build -o notes
 ./notes
