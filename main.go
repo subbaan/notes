@@ -231,6 +231,9 @@ type model struct {
 	showRenamePopup bool
 	renameInput     string
 	renamingNode    *note // the note/folder being renamed
+	// Folder creation popup state
+	showFolderPopup bool
+	folderInput     string
 }
 
 func (m *model) filterTags() {
@@ -291,6 +294,18 @@ func (m *model) checkNameForRename(name string) {
 	} else {
 		m.isNameTaken = false // Same name, not taken
 	}
+}
+
+func (m *model) checkNameForFolder(name string) {
+	sanitized := sanitizeTitle(name)
+	if sanitized == "" {
+		m.isNameTaken = false
+		return
+	}
+
+	path := filepath.Join(m.currentNode.path, sanitized)
+	_, err := os.Stat(path)
+	m.isNameTaken = !os.IsNotExist(err)
 }
 
 func sanitizeTitle(title string) string {
@@ -549,6 +564,51 @@ func (m *model) updateNavigationView(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	// Handle folder creation popup if it's showing
+	if m.showFolderPopup {
+		switch msg.String() {
+		case "enter":
+			if m.isNameTaken {
+				return m, nil // Don't create if name is taken
+			}
+			folderName := m.folderInput
+			sanitizedName := sanitizeTitle(folderName)
+			if sanitizedName != "" {
+				newPath := filepath.Join(m.currentNode.path, sanitizedName)
+				if err := os.MkdirAll(newPath, 0755); err != nil {
+					log.Printf("Error creating directory: %v", err)
+				} else {
+					n := newNote(m.currentNode, newPath, folderName, "", true, false, nil, nil)
+					m.currentNode.children = append(m.currentNode.children, n)
+				}
+			}
+			// Close popup
+			m.showFolderPopup = false
+			m.folderInput = ""
+			m.isNameTaken = false
+			return m, nil
+		case "esc":
+			// Cancel folder creation
+			m.showFolderPopup = false
+			m.folderInput = ""
+			m.isNameTaken = false
+			return m, nil
+		case "backspace":
+			if len(m.folderInput) > 0 {
+				m.folderInput = m.folderInput[:len(m.folderInput)-1]
+				m.checkNameForFolder(m.folderInput)
+			}
+			return m, nil
+		default:
+			// Add character to folder input
+			if len(msg.String()) == 1 {
+				m.folderInput += msg.String()
+				m.checkNameForFolder(m.folderInput)
+			}
+			return m, nil
+		}
+	}
+
 	switch msg.String() {
 	case "up", "k":
 		if len(m.currentNode.children) > 0 {
@@ -616,10 +676,8 @@ func (m *model) updateNavigationView(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.cursor = -1
 		return m, nil
 	case "F":
-		m.mode = creatingFolderView
-		m.editor.SetValue("")
-		m.editor.SetPlaceholder("New Folder Name...")
-		m.editor.Focus()
+		m.showFolderPopup = true
+		m.folderInput = ""
 		m.isNameTaken = false
 		return m, nil
 	case "ctrl+t":
@@ -1916,6 +1974,79 @@ func (m model) View() string {
 
 				// Replace the middle portion of the base line with the popup line
 				// This is a simplified overlay - just center the popup
+				if startCol < baseWidth {
+					// Build the overlaid line
+					prefix := ""
+					suffix := ""
+					if startCol > 0 {
+						// Extract prefix (before popup)
+						prefix = lipgloss.NewStyle().Width(startCol).Render(baseLine[:min(startCol, len(baseLine))])
+					}
+					endCol := startCol + popupWidth
+					if endCol < baseWidth {
+						// Extract suffix (after popup)
+						suffix = baseLine[min(endCol, len(baseLine)):]
+					}
+					baseLines[row] = prefix + popupLine + suffix
+				} else {
+					baseLines[row] = popupLine
+				}
+			}
+		}
+
+		return strings.Join(baseLines, "\n")
+	}
+
+	// Overlay folder creation popup if active
+	if m.showFolderPopup {
+		// Create popup box
+		popupStyle := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color(fmt.Sprintf("%d", config.Colors.BorderColor))).
+			Padding(1, 2).
+			Background(lipgloss.Color(fmt.Sprintf("%d", config.Colors.StatusBg))).
+			Foreground(lipgloss.Color(fmt.Sprintf("%d", config.Colors.StatusFg)))
+
+		var content strings.Builder
+
+		content.WriteString(lipgloss.NewStyle().Bold(true).Render("New Folder") + "\n\n")
+		inputDisplay := m.folderInput + "█"
+		content.WriteString(inputDisplay + "\n\n")
+
+		if m.isNameTaken {
+			errorStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("9"))
+			content.WriteString(errorStyle.Render("⚠ Name already exists!") + "\n\n")
+		}
+
+		helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(fmt.Sprintf("%d", config.Colors.StatusFg)))
+		content.WriteString(helpStyle.Render("Enter: create | Esc: cancel"))
+
+		popup := popupStyle.Render(content.String())
+
+		// Split base view into lines
+		baseLines := strings.Split(baseView, "\n")
+		popupLines := strings.Split(popup, "\n")
+
+		// Calculate popup position (centered)
+		popupHeight := len(popupLines)
+		popupWidth := lipgloss.Width(popup)
+		startRow := (len(baseLines) - popupHeight) / 2
+		if startRow < 0 {
+			startRow = 0
+		}
+
+		// Overlay popup lines onto base view lines
+		for i, popupLine := range popupLines {
+			row := startRow + i
+			if row >= 0 && row < len(baseLines) {
+				baseLine := baseLines[row]
+				baseWidth := lipgloss.Width(baseLine)
+				startCol := (baseWidth - popupWidth) / 2
+				if startCol < 0 {
+					startCol = 0
+				}
+
+				// Replace the middle portion of the base line with the popup line
 				if startCol < baseWidth {
 					// Build the overlaid line
 					prefix := ""
