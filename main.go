@@ -265,7 +265,7 @@ func (m *model) checkName(name string) {
 	if m.mode == creatingFolderView {
 		path = filepath.Join(m.currentNode.path, sanitized)
 	} else {
-		path = filepath.Join(m.currentNode.path, sanitized+".md")
+		path = filepath.Join(m.currentNode.path, sanitized+".txt")
 	}
 	_, err := os.Stat(path)
 	m.isNameTaken = !os.IsNotExist(err)
@@ -284,7 +284,7 @@ func (m *model) checkNameForRename(name string) {
 	if m.renamingNode.isDir {
 		newPath = filepath.Join(parentPath, sanitized)
 	} else {
-		newPath = filepath.Join(parentPath, sanitized+".md")
+		newPath = filepath.Join(parentPath, sanitized+".txt")
 	}
 
 	// Check if the new path already exists AND it's not the same as the current path
@@ -509,7 +509,7 @@ func (m *model) updateNavigationView(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				if m.renamingNode.isDir {
 					newPath = filepath.Join(parentPath, sanitizedName)
 				} else {
-					newPath = filepath.Join(parentPath, sanitizedName+".md")
+					newPath = filepath.Join(parentPath, sanitizedName+".txt")
 				}
 
 				// Only rename if the path has actually changed
@@ -1190,7 +1190,7 @@ func (m *model) updateEditingView(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 					noteContent = lines[1]
 				}
 				sanitizedTitle := sanitizeTitle(title)
-				path := filepath.Join(m.currentNode.path, sanitizedTitle+".md")
+				path := filepath.Join(m.currentNode.path, sanitizedTitle+".txt")
 				matches := tagRegex.FindAllStringSubmatch(noteContent, -1)
 				var tags []string
 				for _, match := range matches {
@@ -1240,7 +1240,7 @@ func (m *model) updateEditingView(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				noteContent = lines[1]
 			}
 			sanitizedTitle := sanitizeTitle(title)
-			path := filepath.Join(m.currentNode.path, sanitizedTitle+".md")
+			path := filepath.Join(m.currentNode.path, sanitizedTitle+".txt")
 			matches := tagRegex.FindAllStringSubmatch(noteContent, -1)
 			var tags []string
 			for _, match := range matches {
@@ -1321,7 +1321,7 @@ func (m *model) updateEditingView(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 					noteContent = lines[1]
 				}
 				sanitizedTitle := sanitizeTitle(title)
-				path := filepath.Join(m.currentNode.path, sanitizedTitle+".md")
+				path := filepath.Join(m.currentNode.path, sanitizedTitle+".txt")
 				matches := tagRegex.FindAllStringSubmatch(noteContent, -1)
 				var tags []string
 				for _, match := range matches {

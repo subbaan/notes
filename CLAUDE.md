@@ -76,7 +76,7 @@ Current version format: Single line with version number (e.g., "0.5.2")
 
 ### Data Storage
 
-- Notes stored as `.md` files in hierarchical folders
+- Notes stored as `.txt` files in hierarchical folders
 - Trash stored in `.trash` subdirectory within notes path
 - Favorite metadata stored as `favorite: true\n` prefix in file content
 - Tags extracted from content using regex pattern: `(^|\s)#(\w+)`
