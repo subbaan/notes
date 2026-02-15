@@ -1,6 +1,6 @@
 # Notes
 
-A fast, simple terminal note-taking app. No databases, no sync services, no complexity - just plain markdown files in folders.
+A fast, simple terminal note-taking app. No databases, no sync services, no complexity - just plain txt files in folders.
 
 Built with Go and [Bubble Tea](https://github.com/charmbracelet/bubbletea).
 
