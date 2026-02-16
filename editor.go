@@ -730,7 +730,11 @@ func (e *Editor) Update(msg tea.Msg) tea.Cmd {
 			// Insert regular characters
 			if len(msg.Runes) > 0 {
 				for _, r := range msg.Runes {
-					e.insertRune(r)
+					if r == '\n' || r == '\r' {
+						e.insertNewline()
+					} else {
+						e.insertRune(r)
+					}
 				}
 			}
 		}
