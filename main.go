@@ -432,10 +432,26 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width = msg.Width
 		m.height = msg.Height
 		m.editor.SetWidth(m.width)
-		// Calculate editor height: total height - title (1 line) - status bar (dynamic)
-		statusHeight := m.getStatusBarHeight()
-		m.editor.SetHeight(m.height - 1 - statusHeight)
+		// Calculate editor height: total height - title (1 line) - status bar (1 line in editing mode)
+		m.editor.SetHeight(m.height - 1 - 1)
+		m.editor.SetYOffset(1) // title bar = 1 line
 		return m, nil
+	case tea.MouseMsg:
+		mouseEvent := tea.MouseEvent(msg)
+		switch mouseEvent.Button {
+		case tea.MouseButtonWheelUp:
+			if m.mode == navigationView && len(m.currentNode.children) > 0 {
+				if m.cursor > 0 {
+					m.cursor--
+				}
+			}
+		case tea.MouseButtonWheelDown:
+			if m.mode == navigationView && len(m.currentNode.children) > 0 {
+				if m.cursor < len(m.currentNode.children)-1 {
+					m.cursor++
+				}
+			}
+		}
 	case tea.KeyMsg:
 		if msg.String() == "ctrl+c" || (m.mode == navigationView && msg.String() == "q") {
 			m.quitting = true
@@ -2122,7 +2138,7 @@ func main() {
 	}
 	initialModel.sortNotes()
 
-	p := tea.NewProgram(&initialModel, tea.WithAltScreen())
+	p := tea.NewProgram(&initialModel, tea.WithAltScreen(), tea.WithMouseCellMotion())
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)
