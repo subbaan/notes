@@ -10,7 +10,7 @@ Built with Go and [Bubble Tea](https://github.com/charmbracelet/bubbletea).
 
 Notes keeps things simple:
 
-- **Plain files** - Your notes are just `.md` files in directories. Use them with any other tool, back them up however you want, grep them from the command line.
+- **Plain files** - Your notes are just `.txt` files in directories. Use them with any other tool, back them up however you want, grep them from the command line.
 - **No lock-in** - There's no proprietary format or database. Your notes folder works fine without this app.
 - **Fast startup** - Opens instantly. No waiting for sync or database initialization.
 - **Keyboard-driven** - Everything accessible without touching the mouse.
